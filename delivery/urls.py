@@ -1,8 +1,7 @@
 from django.urls import path
-from .views import *
+from .views import courier_list
 
-app_name = 'delivery'
 
 urlpatterns = [
-    path('', CourierCreateView.as_view())
+    path('couriers', courier_list),
 ]
