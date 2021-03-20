@@ -7,11 +7,24 @@ from .serializers import CourierSerializer
 
 @api_view(['POST'])
 def courier_list(request):
+    data_list = request.data['data']
+    
+    correct_data_list = []
+    id_errors_list = []
 
-    for data in request.data['data']:
+    for data in data_list:
         serializer = CourierSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+        if serializer.is_valid():
+            correct_data_list.append(serializer)
+        else:
+            id_errors_list.append(serializer['courier_id'])
+        
+    if id_errors_list == []:
+        for data in correct_data_list:
+            data.save()
+        correct_data_list.clear()
+        return Response(serializer.error_messages, status=status.HTTP_201_CREATED)            
+    
+    id_errors_list.clear()
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
