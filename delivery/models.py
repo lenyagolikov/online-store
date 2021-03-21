@@ -14,8 +14,7 @@ class Courier(models.Model):
     courier_id = models.IntegerField(
         primary_key=True, validators=[MinValueValidator(1)])
     courier_type = models.CharField(max_length=4, choices=COURIER_TYPES)
-    regions = ArrayField(models.IntegerField(unique=True,
-                                             validators=[MinValueValidator(1)]))
+    regions = ArrayField(models.IntegerField(validators=[MinValueValidator(1)]))
     working_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r'^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]'
     )]))
