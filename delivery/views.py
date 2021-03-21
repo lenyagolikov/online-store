@@ -3,12 +3,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Courier, Order
 from .serializers import CourierSerializer
-from django.core.exceptions import ValidationError as DjangoValidationError
-from rest_framework.serializers import ValidationError
-
-
-def validation_error(id_error_list):
-    pass
 
 
 @api_view(['POST'])
