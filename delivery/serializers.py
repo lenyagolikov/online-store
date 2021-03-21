@@ -9,7 +9,7 @@ class CourierSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class OrderSieralizer(serializers.ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
