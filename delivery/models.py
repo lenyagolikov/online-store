@@ -1,7 +1,7 @@
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-
+from decimal import Decimal
 
 class Courier(models.Model):
 
@@ -27,7 +27,7 @@ class Order(models.Model):
     order_id = models.IntegerField(
         primary_key=True, validators=[MinValueValidator(1)])
     weight = models.DecimalField(max_digits=5, decimal_places=2,
-                                 validators=[MinValueValidator(0.01), MaxValueValidator(50)])
+                                 validators=[MinValueValidator(Decimal("0.01")), MaxValueValidator(50)])
     region = models.IntegerField(validators=[MinValueValidator(1)])
     delivery_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r'^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]'
