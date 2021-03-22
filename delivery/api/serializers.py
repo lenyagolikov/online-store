@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Courier, Order
+from ..models import Courier, Order
 
 
 class CourierSerializer(serializers.ModelSerializer):
