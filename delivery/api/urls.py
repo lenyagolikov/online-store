@@ -1,5 +1,5 @@
 from django.urls import path
-from .api_views import CouriersPostRequest, OrdersPostRequest
+from .views import CouriersPostRequest, OrdersPostRequest
 
 
 urlpatterns = [
