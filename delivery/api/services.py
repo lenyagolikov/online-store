@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_framework import fields, status
+from rest_framework import serializers, status
 
 
 def valid_create(data_list, ModelSerializer, model):
@@ -47,7 +47,7 @@ def valid_create(data_list, ModelSerializer, model):
 def valid_update(fields_dict, courier, ModelSerializer):
     """Возвращает статус валидности запроса
 
-    fields_dict - поля и их значния в словаре
+    fields_dict - поля и их значения в словаре
     courier - объект курьера, если id имеется в базе, иначе пустой
     ModelSerializer - сериализатор модели для валидации
     valid_fields - требуемые поля для заполнения
@@ -76,5 +76,26 @@ def valid_update(fields_dict, courier, ModelSerializer):
                     courier_info = dict(zip(model_fields, values_fields))
 
                     return Response(courier_info, status=status.HTTP_201_CREATED)
+
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def valid_assign(fields_dict, ModelSerializer):
+    """Возвращает статус валидности запроса
+
+    fields_dict - поля и их значения в словаре
+    valid_fields - требуемые поля для заполнения
+    taken_fields - поля, находящиеся в одном объекте запроса
+    """
+
+    if fields_dict:
+        serializer = ModelSerializer(data=fields_dict)
+
+        valid_fields = sorted(serializer.Meta.fields)
+        taken_fields = sorted(list(serializer.initial_data.keys()))
+
+        if serializer.is_valid() and valid_fields == taken_fields:
+            # same logic
+            return Response(status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)

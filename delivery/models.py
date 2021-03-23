@@ -36,8 +36,9 @@ class Order(models.Model):
     )]))
 
 
-# class Assign(models.Model):
-#    courier = models.ForeignKey("Courier", on_delete=models.CASCADE)
-#    order = models.ForeignKey("Order", on_delete=models.CASCADE)
-#    assign_time = models.DateTimeField(auto_now_add=True)
+class Assign(models.Model):
+    assign_id = models.IntegerField(primary_key=True)
+    courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
+    order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
+    assign_time = models.DateTimeField(auto_now_add=True)
 #    completed_time = models.CharField(max_length=100, blank=True)

@@ -1,9 +1,9 @@
 from rest_framework.decorators import api_view
 
-from .serializers import CouriersCreateSerializer, CourierUpdateSerializer, OrdersCreateSerializer
-from .services import valid_create, valid_update
-
 from ..models import Courier
+
+from .services import valid_create, valid_update, valid_assign
+from .serializers import *
 
 
 @api_view(['POST'])
@@ -41,3 +41,15 @@ def orders_create(request):
     data_list = request.data['data']
 
     return valid_create(data_list, OrdersCreateSerializer, "orders")
+
+
+@api_view(['POST'])
+def orders_assign(request):
+    """
+    Принимает id курьера и назначает максимальное количество заказов,
+    подходящих по весу, району и графику работы
+    """
+
+    fields_dict = request.data
+
+    return valid_assign(fields_dict, OrderAssignSerializer)
