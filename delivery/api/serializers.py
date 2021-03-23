@@ -25,4 +25,4 @@ class OrdersCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['order_id', 'weight', 'region', 'delivery_hours']
