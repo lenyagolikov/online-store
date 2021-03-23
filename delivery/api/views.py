@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+
 from .serializers import CourierCreateSerializer, OrderCreateSerializer
 from .services import data_is_valid
 
@@ -10,10 +11,6 @@ class CouriersPostRequest(APIView):
 
         data_list = request.data['data']
         return data_is_valid(data_list, CourierCreateSerializer, "couriers")
-
-
-class CourierUpdateRequest(APIView):
-    pass
 
 
 class OrdersPostRequest(APIView):
