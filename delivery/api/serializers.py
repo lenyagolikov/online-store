@@ -3,14 +3,14 @@ from rest_framework import serializers
 from ..models import Courier, Order
 
 
-class CourierCreateSerializer(serializers.ModelSerializer):
+class CouriersCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Courier
         fields = '__all__'
 
 
-class OrderCreateSerializer(serializers.ModelSerializer):
+class OrdersCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order

@@ -3,7 +3,7 @@ from rest_framework import status
 
 
 def data_is_valid(data_list, ModelSerializer, model):
-    """Проверка валидности входных данных
+    """Возвращает ответ в виде HTTP статуса
 
     data_list - принимаемые данные с запроса
     ModelSerializer - модель класса из БД

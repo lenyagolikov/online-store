@@ -1,9 +1,9 @@
 from django.urls import path
 
-from .views import CouriersPostRequest, OrdersPostRequest
+from .views import couriers_create, orders_create
 
 
 urlpatterns = [
-    path('couriers', CouriersPostRequest.as_view()),
-    path('orders', OrdersPostRequest.as_view()),
+    path('couriers', couriers_create),
+    path('orders', orders_create),
 ]
