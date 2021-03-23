@@ -19,7 +19,7 @@ class Courier(models.Model):
     regions = ArrayField(models.IntegerField(
         validators=[MinValueValidator(1)]))
     working_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
-        regex=r'^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]'
+        regex=r"^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]"
     )]))
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True)

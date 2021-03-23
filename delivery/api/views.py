@@ -19,9 +19,9 @@ def couriers_create(request):
 def courier_update(request, id):
     """Принимает запрос на изменение полей у курьера с указанным id"""
 
-    courier = Courier.objects.filter(courier_id=id).first()
+    courier = Courier.objects.filter(courier_id=id)
     fields_list = request.data
-    
+
     return valid_update(fields_list, courier, CourierUpdateSerializer)
 
 
