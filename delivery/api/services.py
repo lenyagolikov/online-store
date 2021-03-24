@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework import status
 
-from datetime import time
+from datetime import datetime, time
 
 
 def valid_create(data_list, ModelSerializer, model):
@@ -112,7 +112,7 @@ def is_right_time(delivery_hours, working_hours):
     return False
 
 
-def valid_assign(fields_dict, ModelSerializer, courier, available_orders):
+def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign):
     """Возвращает статус валидности запроса
 
     fields_dict - поля и их значения в словаре
@@ -120,6 +120,8 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders):
     taken_fields - поля, находящиеся в одном объекте запроса
     courier - объект курьера, найденный по id
     available_orders - заказы, доступные к выдаче
+    Assign - таблица, где хранятся курьеры и их заказы
+    issues_orders - подходящие заказы
     """
 
     if fields_dict:
@@ -130,12 +132,29 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders):
 
         if serializer.is_valid() and valid_fields == taken_fields:
 
+            issues_orders = []
+
             for order in available_orders:
                 if order.region in courier.regions:
                     if is_right_time(order.delivery_hours, courier.working_hours):
-                        # same logic
-                        pass
+                        max_weight = int(courier.get_courier_type_display())
 
-            return Response(status=status.HTTP_201_CREATED)
+                        if order.weight + courier.used_weight <= max_weight:
+                            issues_orders.append(order.order_id)
+                            order.weight = 25
+                            order.is_available = False
+                            courier.used_weight += order.weight
+
+            if issues_orders == []:
+                return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
+
+            assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
+
+            Assign.objects.create(
+                courier_id=courier, orders_ids=issues_orders, assign_time=assign_time)
+
+            orders_ids = [{"id": order_id} for order_id in issues_orders]
+
+            return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)

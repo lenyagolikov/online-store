@@ -22,6 +22,7 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r"^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]"
     )]))
+    used_weight = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True)
 

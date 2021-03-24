@@ -1,7 +1,6 @@
-from django.contrib.postgres import fields
 from rest_framework.decorators import api_view
 
-from ..models import Courier, Orders
+from ..models import Courier, Orders, Assign
 
 from .services import valid_create, valid_update, valid_assign
 from .serializers import *
@@ -54,6 +53,6 @@ def orders_assign(request):
     fields_dict = request.data
 
     courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
-    available_orders = Orders.objects.filter(is_available=True)
+    available_orders = Orders.objects.filter(is_available=True).order_by("weight")
 
-    return valid_assign(fields_dict, OrderAssignSerializer, courier, available_orders)
+    return valid_assign(fields_dict, OrderAssignSerializer, courier, available_orders, Assign)
