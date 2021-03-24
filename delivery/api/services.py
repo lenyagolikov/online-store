@@ -1,5 +1,7 @@
 from rest_framework.response import Response
-from rest_framework import serializers, status
+from rest_framework import status
+
+from datetime import time
 
 
 def valid_create(data_list, ModelSerializer, model):
@@ -80,12 +82,44 @@ def valid_update(fields_dict, courier, ModelSerializer):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_assign(fields_dict, ModelSerializer):
+def is_right_time(delivery_hours, working_hours):
+    """
+    Принимает часы доставки заказа и график работы курьера
+    Если курьеру удобно принять заказ, то возвращает True, иначе False
+
+    begin_time - начало промежутка
+    end_time - конец промежутка
+    check_time - проверка, входит ли это время в промежуток
+    """
+
+    for delivery_time in delivery_hours:
+        check_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
+
+        for working_time in working_hours:
+            begin_time = time(int(working_time[:2]), int(working_time[3:5]))
+            end_time = time(int(working_time[6:8]), int(working_time[9:]))
+
+            if begin_time <= check_time <= end_time:
+                return True
+
+            begin_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
+            end_time = time(int(delivery_time[6:8]), int(delivery_time[9:]))
+            check_time = time(int(working_time[:2]), int(working_time[3:5]))
+
+            if begin_time <= check_time <= end_time:
+                return True
+
+    return False
+
+
+def valid_assign(fields_dict, ModelSerializer, courier, available_orders):
     """Возвращает статус валидности запроса
 
     fields_dict - поля и их значения в словаре
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, находящиеся в одном объекте запроса
+    courier - объект курьера, найденный по id
+    available_orders - заказы, доступные к выдаче
     """
 
     if fields_dict:
@@ -95,7 +129,13 @@ def valid_assign(fields_dict, ModelSerializer):
         taken_fields = sorted(list(serializer.initial_data.keys()))
 
         if serializer.is_valid() and valid_fields == taken_fields:
-            # same logic
+
+            for order in available_orders:
+                if order.region in courier.regions:
+                    if is_right_time(order.delivery_hours, courier.working_hours):
+                        # same logic
+                        pass
+
             return Response(status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)

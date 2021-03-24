@@ -3,14 +3,15 @@ from decimal import Decimal
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.db.models.fields import IntegerField
 
 
 class Courier(models.Model):
 
     COURIER_TYPES = [
-        ('foot', 'foot'),
-        ('bike', 'bike'),
-        ('car', 'car'),
+        ('foot', '10'),
+        ('bike', '15'),
+        ('car', '50'),
     ]
 
     courier_id = models.IntegerField(
@@ -25,7 +26,7 @@ class Courier(models.Model):
     earnings = models.IntegerField(null=True)
 
 
-class Order(models.Model):
+class Orders(models.Model):
     order_id = models.IntegerField(
         primary_key=True, validators=[MinValueValidator(1)])
     weight = models.DecimalField(max_digits=5, decimal_places=2,
@@ -34,11 +35,10 @@ class Order(models.Model):
     delivery_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r'^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]'
     )]))
+    is_available = models.BooleanField(default=True)
 
 
 class Assign(models.Model):
-    assign_id = models.IntegerField(primary_key=True)
     courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
-    order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
-    assign_time = models.DateTimeField(auto_now_add=True)
-#    completed_time = models.CharField(max_length=100, blank=True)
+    orders_ids = ArrayField(models.IntegerField())
+    assign_time = models.CharField(max_length=24)
