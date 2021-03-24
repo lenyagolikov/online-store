@@ -122,6 +122,8 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign
     available_orders - заказы, доступные к выдаче
     Assign - таблица, где хранятся курьеры и их заказы
     issues_orders - подходящие заказы
+    assign_time - время назначенного заказа
+    orders_ids - id's выданных заказов
     """
 
     if fields_dict:
@@ -135,15 +137,19 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign
             issues_orders = []
 
             for order in available_orders:
+                
                 if order.region in courier.regions:
+                    
                     if is_right_time(order.delivery_hours, courier.working_hours):
                         max_weight = int(courier.get_courier_type_display())
 
                         if order.weight + courier.used_weight <= max_weight:
                             issues_orders.append(order.order_id)
-                            order.weight = 25
                             order.is_available = False
                             courier.used_weight += order.weight
+
+                            order.save()
+                            courier.save()
 
             if issues_orders == []:
                 return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
