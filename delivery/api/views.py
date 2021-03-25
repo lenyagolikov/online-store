@@ -48,17 +48,11 @@ def orders_assign(request):
 
     courier - объект курьера, найденный по id
     available_orders - заказы, доступные к выдаче
-    is_busy_for_orders - проверка, занят ли курьер для выдачи новых заказов
-    re_delivery - проверка, разносил ли уже заказы курьер
     """
 
     fields_dict = request.data
 
     courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
     available_orders = Order.objects.filter(is_available=True).order_by("weight")
-    re_delivery = Assign.objects.filter(courier_id=courier.courier_id).first()
-    is_busy_for_orders = Assign.objects.filter(courier_id=courier.courier_id, complete_time=None).first()
 
-    return valid_assign(OrdersAssignSerializer, Assign, available_orders, courier,
-                        fields_dict, is_busy_for_orders, re_delivery
-                        )
+    return valid_assign(OrdersAssignSerializer, Assign, available_orders, courier, fields_dict)

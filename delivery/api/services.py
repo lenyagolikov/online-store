@@ -89,65 +89,66 @@ def valid_update(ModelSerializer, courier, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict, is_busy_for_orders, re_delivery):
+def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict):
     """Возвращает статус валидности запроса (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
 
-    is_busy_for_orders - проверка, занят ли курьер для выдачи новых заказов
-    re_delivery - проверка, разносил ли уже заказы курьер
     available_orders - заказы, доступные к выдаче
     courier - объект курьера, если id имеется в базе, иначе пустой
     fields_dict - список полей, переданных в запросе
-
+    
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
+    
+    is_busy_for_orders - проверка, занят ли курьер для выдачи новых заказов
+    re_delivery - проверка, разносил ли уже заказы курьер
 
     issues_orders - список выданных заказов
     assign_time - время назначенного заказа
     orders_ids - id's выданных заказов
     """
 
-    if fields_dict:
-        serializer = ModelSerializer(data=fields_dict)
+    serializer = ModelSerializer(data=fields_dict)
 
-        valid_fields = sorted(serializer.Meta.fields)
-        taken_fields = sorted(list(serializer.initial_data.keys()))
+    valid_fields = sorted(serializer.Meta.fields)
+    taken_fields = sorted(list(serializer.initial_data.keys()))
 
-        if serializer.is_valid() and valid_fields == taken_fields:
-            if not is_busy_for_orders:
-                issues_orders = []
+    if serializer.is_valid() and valid_fields == taken_fields:
+        is_busy_for_orders = Assign.objects.filter(courier_id=courier.courier_id, complete_time=None).first()
+        re_delivery = Assign.objects.filter(courier_id=courier.courier_id).first()
+        
+        if not is_busy_for_orders:
+            issues_orders = []
 
-                for order in available_orders:
-                    if order.region in courier.regions:
-                        if is_available_order_time(order.delivery_hours, courier.working_hours):
-                            max_weight = int(
-                                courier.get_courier_type_display())
-                            current_weight = 0
+            for order in available_orders:
+                if order.region in courier.regions and is_available_order_time(order.delivery_hours, courier.working_hours):
+                    max_weight = int(courier.get_courier_type_display())
+                    current_weight = 0
 
-                            if order.weight + current_weight <= max_weight:
-                                issues_orders.append(order)
-                                order.is_available = False
-                                current_weight += order.weight
-                                order.save()
+                    if order.weight + current_weight <= max_weight:
+                        issues_orders.append(order)
+                        order.is_available = False
+                        current_weight += order.weight
+                        order.save()
 
-                if issues_orders == []:
-                    return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
+            if issues_orders == []:
+                return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
 
-                if re_delivery:
-                    assign_time = Assign.objects.filter(
-                        courier_id=courier.courier_id).first().assign_time
-                else:
-                    assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
+            if re_delivery:
+                assign_time = Assign.objects.filter(
+                    courier_id=courier.courier_id).first().assign_time
+            else:
+                assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
 
-                for order in issues_orders:
-                    Assign.objects.create(courier_id=courier,
-                                          order_id=order, assign_time=assign_time)
+            for order in issues_orders:
+                Assign.objects.create(courier_id=courier,
+                                      order_id=order, assign_time=assign_time)
 
-                orders_ids = [{"id": order.order_id}
-                              for order in issues_orders]
+            orders_ids = [{"id": order.order_id}
+                          for order in issues_orders]
 
-                return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
+            return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
