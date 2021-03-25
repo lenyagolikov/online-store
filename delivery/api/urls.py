@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import couriers_create, orders_create, courier_update, orders_assign
+from .views import *
 
 
 urlpatterns = [

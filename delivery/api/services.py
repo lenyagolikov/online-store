@@ -93,18 +93,17 @@ def is_right_time(delivery_hours, working_hours):
     """
 
     for delivery_time in delivery_hours:
-        check_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
-
         for working_time in working_hours:
+            check_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
             begin_time = time(int(working_time[:2]), int(working_time[3:5]))
             end_time = time(int(working_time[6:8]), int(working_time[9:]))
 
             if begin_time <= check_time <= end_time:
                 return True
-
+            
+            check_time = time(int(working_time[:2]), int(working_time[3:5]))
             begin_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
             end_time = time(int(delivery_time[6:8]), int(delivery_time[9:]))
-            check_time = time(int(working_time[:2]), int(working_time[3:5]))
 
             if begin_time <= check_time <= end_time:
                 return True
@@ -115,13 +114,16 @@ def is_right_time(delivery_hours, working_hours):
 def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign):
     """Возвращает статус валидности запроса
 
-    fields_dict - поля и их значения в словаре
-    valid_fields - требуемые поля для заполнения
-    taken_fields - поля, находящиеся в одном объекте запроса
+    fields_dict - поля и их значения в словаре, переданные в запросе
+    ModelSerializer - модель сериализатора(в данном случае для Assign)
     courier - объект курьера, найденный по id
     available_orders - заказы, доступные к выдаче
-    Assign - таблица, где хранятся курьеры и их заказы
-    issues_orders - подходящие заказы
+    Assign - таблица в БД, где хранятся курьеры и их заказы
+    serializer - сериализатор для проверки данных
+    valid_fields - требуемые поля для заполнения
+    taken_fields - поля, находящиеся в одном объекте запроса
+    available_orders - заказы, доступные к выдаче
+    issues_orders - хранятся подходящие заказы
     assign_time - время назначенного заказа
     orders_ids - id's выданных заказов
     """
@@ -133,18 +135,15 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign
         taken_fields = sorted(list(serializer.initial_data.keys()))
 
         if serializer.is_valid() and valid_fields == taken_fields:
-
             issues_orders = []
 
             for order in available_orders:
-                
                 if order.region in courier.regions:
-                    
                     if is_right_time(order.delivery_hours, courier.working_hours):
                         max_weight = int(courier.get_courier_type_display())
 
                         if order.weight + courier.used_weight <= max_weight:
-                            issues_orders.append(order.order_id)
+                            issues_orders.append(order)
                             order.is_available = False
                             courier.used_weight += order.weight
 
@@ -156,10 +155,11 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign
 
             assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
 
-            Assign.objects.create(
-                courier_id=courier, orders_ids=issues_orders, assign_time=assign_time)
+            for order in issues_orders:
+                Assign.objects.create(courier_id=courier,
+                                      order_id=order, assign_time=assign_time)
 
-            orders_ids = [{"id": order_id} for order_id in issues_orders]
+            orders_ids = [{"id": order.order_id} for order in issues_orders]
 
             return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
 

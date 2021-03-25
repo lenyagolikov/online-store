@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 
-from ..models import Courier, Orders, Assign
+from ..models import Courier, Order, Assign
 
 from .services import valid_create, valid_update, valid_assign
 from .serializers import *
@@ -13,7 +13,7 @@ def couriers_create(request):
     Возвращает результат функции valid_create
     """
 
-    data_list = request.data['data']
+    data_list = request.data.get('data')
 
     return valid_create(data_list, CouriersCreateSerializer, "couriers")
 
@@ -38,7 +38,7 @@ def orders_create(request):
     Возвращает результат функции valid_create
     """
 
-    data_list = request.data['data']
+    data_list = request.data.get('data')
 
     return valid_create(data_list, OrdersCreateSerializer, "orders")
 
@@ -53,6 +53,6 @@ def orders_assign(request):
     fields_dict = request.data
 
     courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
-    available_orders = Orders.objects.filter(is_available=True).order_by("weight")
+    available_orders = Order.objects.filter(is_available=True).order_by("weight")
 
     return valid_assign(fields_dict, OrderAssignSerializer, courier, available_orders, Assign)

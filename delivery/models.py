@@ -3,7 +3,6 @@ from decimal import Decimal
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.db.models.fields import IntegerField
 
 
 class Courier(models.Model):
@@ -22,12 +21,13 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r"^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]"
     )]))
-    used_weight = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    used_weight = models.DecimalField(
+        max_digits=5, decimal_places=2, default=0)
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True)
 
 
-class Orders(models.Model):
+class Order(models.Model):
     order_id = models.IntegerField(
         primary_key=True, validators=[MinValueValidator(1)])
     weight = models.DecimalField(max_digits=5, decimal_places=2,
@@ -41,5 +41,6 @@ class Orders(models.Model):
 
 class Assign(models.Model):
     courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
-    orders_ids = ArrayField(models.IntegerField())
+    order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
     assign_time = models.CharField(max_length=24)
+    complete_time = models.CharField(max_length=24, blank=True)

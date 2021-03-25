@@ -1,7 +1,7 @@
 from enum import unique
 from rest_framework import serializers
 
-from ..models import Courier, Orders, Assign
+from ..models import Courier, Order, Assign
 
 
 class CouriersCreateSerializer(serializers.ModelSerializer):
@@ -25,7 +25,7 @@ class CourierUpdateSerializer(serializers.ModelSerializer):
 class OrdersCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Orders
+        model = Order
         fields = ['order_id', 'weight', 'region', 'delivery_hours']
 
 
