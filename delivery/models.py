@@ -21,8 +21,6 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=12, validators=[RegexValidator(
         regex=r"^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]"
     )]))
-    used_weight = models.DecimalField(
-        max_digits=5, decimal_places=2, default=0)
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True)
 
@@ -42,6 +40,6 @@ class Order(models.Model):
 class Assign(models.Model):
     courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
     order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
-    assign_time = models.CharField(max_length=24)
-    complete_time = models.CharField(max_length=24, blank=True)
+    assign_time = models.CharField(max_length=24, null=True, default=None)
+    complete_time = models.CharField(max_length=24, null=True, default=None)
     # сделать регулярку для complete_time

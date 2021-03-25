@@ -12,13 +12,13 @@ def valid_create(ModelSerializer, data_list, model):
     ModelSerializer - сериализатор модели для валидации входных данных
     data_list - список с данными о модели
     model - название модели
-    
+
     valid_objects - список объектов, прошедших валидацию
     invalid_ids - список id's, не прошедших валидацию
 
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
-    
+
     valid_ids_dict - отображение прошедших валидацию id в словаре
     invalid_ids_dict - отображение не прошедших валидацию id в словаре
     """
@@ -53,14 +53,14 @@ def valid_create(ModelSerializer, data_list, model):
 
 def valid_update(ModelSerializer, courier, fields_dict):
     """Возвращает статус валидности запроса (201 или 400)
-    
+
     ModelSerializer - сериализатор модели для валидации входных данных
     courier - объект курьера, если id имеется в базе, иначе пустой
     fields_dict - список данных для обновления информации
 
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
-    
+
     model_fields - все поля модели
     values_fields - значения всех полей модели
     courier_info - информация о курьере в виде словаря
@@ -89,19 +89,21 @@ def valid_update(ModelSerializer, courier, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict):
+def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict, is_busy_for_orders, re_delivery):
     """Возвращает статус валидности запроса (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
-    
+
+    is_busy_for_orders - проверка, занят ли курьер для выдачи новых заказов
+    re_delivery - проверка, разносил ли уже заказы курьер
     available_orders - заказы, доступные к выдаче
     courier - объект курьера, если id имеется в базе, иначе пустой
     fields_dict - список полей, переданных в запросе
-    
+
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
-    
+
     issues_orders - список выданных заказов
     assign_time - время назначенного заказа
     orders_ids - id's выданных заказов
@@ -114,32 +116,38 @@ def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict
         taken_fields = sorted(list(serializer.initial_data.keys()))
 
         if serializer.is_valid() and valid_fields == taken_fields:
-            issues_orders = []
+            if not is_busy_for_orders:
+                issues_orders = []
 
-            for order in available_orders:
-                if order.region in courier.regions:
-                    if is_available_order_time(order.delivery_hours, courier.working_hours):
-                        max_weight = int(courier.get_courier_type_display())
+                for order in available_orders:
+                    if order.region in courier.regions:
+                        if is_available_order_time(order.delivery_hours, courier.working_hours):
+                            max_weight = int(
+                                courier.get_courier_type_display())
+                            current_weight = 0
 
-                        if order.weight + courier.used_weight <= max_weight:
-                            issues_orders.append(order)
-                            order.is_available = False
-                            courier.used_weight += order.weight
+                            if order.weight + current_weight <= max_weight:
+                                issues_orders.append(order)
+                                order.is_available = False
+                                current_weight += order.weight
+                                order.save()
 
-                            order.save()
-                            courier.save()
+                if issues_orders == []:
+                    return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
 
-            if issues_orders == []:
-                return Response({"orders": issues_orders}, status=status.HTTP_201_CREATED)
+                if re_delivery:
+                    assign_time = Assign.objects.filter(
+                        courier_id=courier.courier_id).first().assign_time
+                else:
+                    assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
 
-            assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
+                for order in issues_orders:
+                    Assign.objects.create(courier_id=courier,
+                                          order_id=order, assign_time=assign_time)
 
-            for order in issues_orders:
-                Assign.objects.create(courier_id=courier,
-                                      order_id=order, assign_time=assign_time)
+                orders_ids = [{"id": order.order_id}
+                              for order in issues_orders]
 
-            orders_ids = [{"id": order.order_id} for order in issues_orders]
-
-            return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
+                return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
