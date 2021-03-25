@@ -33,3 +33,10 @@ class OrdersAssignSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assign
         fields = ['courier_id']
+
+
+class OrdersCompleteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Assign
+        fields = ['courier_id', 'order_id', 'complete_time']

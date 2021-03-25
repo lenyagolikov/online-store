@@ -89,19 +89,19 @@ def valid_update(ModelSerializer, courier, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict):
+def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict):
     """Возвращает статус валидности запроса (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
 
-    available_orders - заказы, доступные к выдаче
     courier - объект курьера, если id имеется в базе, иначе пустой
+    available_orders - заказы, доступные к выдаче
     fields_dict - список полей, переданных в запросе
-    
+
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
-    
+
     is_busy_for_orders - проверка, занят ли курьер для выдачи новых заказов
     re_delivery - проверка, разносил ли уже заказы курьер
 
@@ -116,9 +116,11 @@ def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict
     taken_fields = sorted(list(serializer.initial_data.keys()))
 
     if serializer.is_valid() and valid_fields == taken_fields:
-        is_busy_for_orders = Assign.objects.filter(courier_id=courier.courier_id, complete_time=None).first()
-        re_delivery = Assign.objects.filter(courier_id=courier.courier_id).first()
-        
+        is_busy_for_orders = Assign.objects.filter(
+            courier_id=courier.courier_id, complete_time=None).first()
+        re_delivery = Assign.objects.filter(
+            courier_id=courier.courier_id).first()
+
         if not is_busy_for_orders:
             issues_orders = []
 
@@ -150,5 +152,38 @@ def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict
                           for order in issues_orders]
 
             return Response({"orders": orders_ids, "assign_time": assign_time}, status=status.HTTP_201_CREATED)
+
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def valid_complete(ModelSerializer, Assign, fields_dict):
+    """Возвращает статус валидности запроса (201 или 400)
+
+    ModelSerializer - сериализатор модели для валидации входных данных
+    Assign - модель, в которой хранятся заказы, выданные курьерам
+    fields_dict - список полей, переданных в запросе
+
+    valid_fields - требуемые поля для заполнения
+    taken_fields - поля, переданные в запросе
+    """
+
+    serializer = ModelSerializer(data=fields_dict)
+
+    valid_fields = sorted(serializer.Meta.fields)
+    taken_fields = sorted(list(serializer.initial_data.keys()))
+
+    if serializer.is_valid() and valid_fields == taken_fields:
+        courier_id = serializer.data['courier_id']
+        order_id = serializer.data['order_id']
+        complete_time = serializer.data['complete_time']
+
+        correct_order_and_courier = Assign.objects.filter(
+            courier_id=courier_id, order_id=order_id, complete_time=None).first()
+
+        if correct_order_and_courier:
+            correct_order_and_courier.complete_time = complete_time
+            correct_order_and_courier.save()
+
+            return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)

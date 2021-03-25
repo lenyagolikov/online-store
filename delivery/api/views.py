@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 
 from ..models import *
 
-from .services import valid_create, valid_update, valid_assign
+from .services import valid_complete, valid_create, valid_update, valid_assign
 from .serializers import *
 
 
@@ -55,4 +55,16 @@ def orders_assign(request):
     courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
     available_orders = Order.objects.filter(is_available=True).order_by("weight")
 
-    return valid_assign(OrdersAssignSerializer, Assign, available_orders, courier, fields_dict)
+    return valid_assign(OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
+
+
+@api_view(['POST'])
+def orders_complete(request):
+    """
+    Принимает id курьера, id заказа и время выполнения заказа
+    Отмечает заказ выполненным
+    """
+
+    fields_dict = request.data
+
+    return valid_complete(OrdersCompleteSerializer, Assign, fields_dict)
