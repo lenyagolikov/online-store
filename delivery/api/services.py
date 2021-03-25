@@ -7,7 +7,7 @@ from .utils import *
 
 
 def valid_create(ModelSerializer, data_list, model):
-    """Возвращает статус валидности запроса (201 или 400)
+    """Возвращает статус валидности запроса на создание (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     data_list - список с данными о модели
@@ -52,7 +52,7 @@ def valid_create(ModelSerializer, data_list, model):
 
 
 def valid_update(ModelSerializer, courier, fields_dict):
-    """Возвращает статус валидности запроса (201 или 400)
+    """Возвращает статус валидности запроса на обновление (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     courier - объект курьера, если id имеется в базе, иначе пустой
@@ -90,7 +90,7 @@ def valid_update(ModelSerializer, courier, fields_dict):
 
 
 def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict):
-    """Возвращает статус валидности запроса (201 или 400)
+    """Возвращает статус валидности запроса на связывание заказа с курьером (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
@@ -157,7 +157,7 @@ def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict
 
 
 def valid_complete(ModelSerializer, Assign, fields_dict):
-    """Возвращает статус валидности запроса (201 или 400)
+    """Возвращает статус валидности запроса на отметку заказа выполненым (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
@@ -165,6 +165,8 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
 
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
+
+    valid_order_and_courier - невыполненный заказ, соответствующий нужному курьеру
     """
 
     serializer = ModelSerializer(data=fields_dict)
@@ -177,12 +179,12 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
         order_id = serializer.data['order_id']
         complete_time = serializer.data['complete_time']
 
-        correct_order_and_courier = Assign.objects.filter(
+        valid_order_and_courier = Assign.objects.filter(
             courier_id=courier_id, order_id=order_id, complete_time=None).first()
 
-        if correct_order_and_courier:
-            correct_order_and_courier.complete_time = complete_time
-            correct_order_and_courier.save()
+        if valid_order_and_courier:
+            valid_order_and_courier.complete_time = complete_time
+            valid_order_and_courier.save()
 
             return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)
 
