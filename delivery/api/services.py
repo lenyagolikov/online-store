@@ -51,40 +51,66 @@ def valid_create(ModelSerializer, data_list, model):
     return Response({"validation_error": {model: invalid_ids_dict}}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_update(ModelSerializer, courier, fields_dict):
+def valid_update(ModelSerializer, courier, fields_dict, Assign):
     """Возвращает статус валидности запроса на обновление (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
-    courier - объект курьера, если id имеется в базе, иначе пустой
+    courier - объект курьера в queryset, если id имеется в базе, иначе пустой
     fields_dict - список данных для обновления информации
+    Assign - модель, в которой хранятся заказы, выданные курьерам
 
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
+
+    outstanding_orders - невыполненные заказы курьера
+    issues_orders - подходящие заказы
+    unsuitable_orders - неподходящие заказы после изменения информации о курьере
 
     model_fields - все поля модели
     values_fields - значения всех полей модели
     courier_info - информация о курьере в виде словаря
     """
 
-    if courier:
-        if fields_dict:
-            serializer = ModelSerializer(
-                courier.first(), data=fields_dict, partial=True)
+    if courier and fields_dict:
+        serializer = ModelSerializer(
+            courier.first(), data=fields_dict, partial=True)
 
-            valid_fields = sorted(serializer.Meta.fields[1:])
-            taken_fields = sorted(list(serializer.initial_data.keys()))
+        valid_fields = sorted(serializer.Meta.fields[1:])
+        taken_fields = sorted(list(serializer.initial_data.keys()))
 
-            if all(field in valid_fields for field in taken_fields):
+        if all(field in valid_fields for field in taken_fields):
 
-                if serializer.is_valid():
-                    serializer.save()
+            if serializer.is_valid():
+                serializer.save()
 
-                    model_fields = serializer.Meta.fields
-                    values_fields = list(courier.values().first().values())
+                outstanding_orders = Assign.objects.filter(
+                    courier_id=courier.first().courier_id, complete_time=None).order_by('order_id__weight')
+                issues_orders = []
 
-                    courier_info = dict(zip(model_fields, values_fields))
+                for order in outstanding_orders:
+                    if order.region in courier.first().regions and is_available_order_time(order.delivery_hours, courier.first().working_hours):
+                        max_weight = int(courier.first().get_courier_type_display())
+                        current_weight = 0
 
-                    return Response(courier_info, status=status.HTTP_201_CREATED)
+                        if order.weight + current_weight <= max_weight:
+                            issues_orders.append(order)
+                            current_weight += order.weight
+
+                unsuitable_orders = list(
+                    set(outstanding_orders) - set(issues_orders))
+
+                for order in unsuitable_orders:
+                    Assign.objects.filter(
+                        courier_id=courier.first().courier_id, order_id=order.order_id).delete()
+                    order.is_available = True
+                    order.save()
+
+                model_fields = serializer.Meta.fields
+                values_fields = list(courier.values().first().values())
+
+                courier_info = dict(zip(model_fields, values_fields))
+
+                return Response(courier_info, status=status.HTTP_201_CREATED)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
