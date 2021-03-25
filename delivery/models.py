@@ -44,3 +44,4 @@ class Assign(models.Model):
     order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
     assign_time = models.CharField(max_length=24)
     complete_time = models.CharField(max_length=24, blank=True)
+    # сделать регулярку для complete_time

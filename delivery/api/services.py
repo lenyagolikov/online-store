@@ -1,21 +1,26 @@
-from datetime import datetime, time
+from datetime import datetime
 
 from rest_framework.response import Response
 from rest_framework import status
 
+from .utils import *
 
-def valid_create(data_list, ModelSerializer, model):
-    """Возвращает статус валидности запроса
 
-    data_list - все json-объекты запроса, хранит поля и их значения
-    ModelSerializer - сериализатор модели для валидации
+def valid_create(ModelSerializer, data_list, model):
+    """Возвращает статус валидности запроса (201 или 400)
+
+    ModelSerializer - сериализатор модели для валидации входных данных
+    data_list - список с данными о модели
     model - название модели
+    
     valid_objects - список объектов, прошедших валидацию
     invalid_ids - список id's, не прошедших валидацию
+
     valid_fields - требуемые поля для заполнения
-    taken_fields - поля, находящиеся в одном объекте запроса
-    valid_ids_dict - представление id, прошедших валидацию, в словаре
-    invalid_ids_dict - представление id, не прошедших валидацию, в словаре
+    taken_fields - поля, переданные в запросе
+    
+    valid_ids_dict - отображение прошедших валидацию id в словаре
+    invalid_ids_dict - отображение не прошедших валидацию id в словаре
     """
 
     valid_objects = []
@@ -30,7 +35,7 @@ def valid_create(data_list, ModelSerializer, model):
         if serializer.is_valid() and valid_fields == taken_fields:
             valid_objects.append(serializer)
         else:
-            invalid_ids.append(serializer[next(iter(serializer.fields))])
+            invalid_ids.append(serializer[next(iter(serializer.data))].value)
 
     if invalid_ids == []:
 
@@ -42,20 +47,22 @@ def valid_create(data_list, ModelSerializer, model):
 
         return Response({model: valid_ids_dict}, status=status.HTTP_201_CREATED)
 
-    invalid_ids_dict = [{"id": id.value} for id in invalid_ids]
+    invalid_ids_dict = [{"id": id} for id in invalid_ids]
     return Response({"validation_error": {model: invalid_ids_dict}}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_update(fields_dict, courier, ModelSerializer):
-    """Возвращает статус валидности запроса
-
-    fields_dict - поля и их значения в словаре
+def valid_update(ModelSerializer, courier, fields_dict):
+    """Возвращает статус валидности запроса (201 или 400)
+    
+    ModelSerializer - сериализатор модели для валидации входных данных
     courier - объект курьера, если id имеется в базе, иначе пустой
-    ModelSerializer - сериализатор модели для валидации
+    fields_dict - список данных для обновления информации
+
     valid_fields - требуемые поля для заполнения
-    taken_fields - поля, находящиеся в одном объекте запроса
-    model_fields - поля модели
-    values_fields - значения полей модели
+    taken_fields - поля, переданные в запросе
+    
+    model_fields - все поля модели
+    values_fields - значения всех полей модели
     courier_info - информация о курьере в виде словаря
     """
 
@@ -82,48 +89,20 @@ def valid_update(fields_dict, courier, ModelSerializer):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def is_right_time(delivery_hours, working_hours):
-    """
-    Принимает часы доставки заказа и график работы курьера
-    Если курьеру удобно принять заказ, то возвращает True, иначе False
+def valid_assign(ModelSerializer, Assign, available_orders, courier, fields_dict):
+    """Возвращает статус валидности запроса (201 или 400)
 
-    begin_time - начало промежутка
-    end_time - конец промежутка
-    check_time - проверка, входит ли это время в промежуток
-    """
-
-    for delivery_time in delivery_hours:
-        for working_time in working_hours:
-            check_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
-            begin_time = time(int(working_time[:2]), int(working_time[3:5]))
-            end_time = time(int(working_time[6:8]), int(working_time[9:]))
-
-            if begin_time <= check_time <= end_time:
-                return True
-
-            check_time = time(int(working_time[:2]), int(working_time[3:5]))
-            begin_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
-            end_time = time(int(delivery_time[6:8]), int(delivery_time[9:]))
-
-            if begin_time <= check_time <= end_time:
-                return True
-
-    return False
-
-
-def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign):
-    """Возвращает статус валидности запроса
-
-    fields_dict - поля и их значения в словаре, переданные в запросе
-    ModelSerializer - модель сериализатора(в данном случае для Assign)
-    courier - объект курьера, найденный по id
+    ModelSerializer - сериализатор модели для валидации входных данных
+    Assign - модель, в которой хранятся заказы, выданные курьерам
+    
     available_orders - заказы, доступные к выдаче
-    Assign - таблица в БД, где хранятся курьеры и их заказы
-    serializer - сериализатор для проверки данных
+    courier - объект курьера, если id имеется в базе, иначе пустой
+    fields_dict - список полей, переданных в запросе
+    
     valid_fields - требуемые поля для заполнения
-    taken_fields - поля, находящиеся в одном объекте запроса
-    available_orders - заказы, доступные к выдаче
-    issues_orders - хранятся подходящие заказы
+    taken_fields - поля, переданные в запросе
+    
+    issues_orders - список выданных заказов
     assign_time - время назначенного заказа
     orders_ids - id's выданных заказов
     """
@@ -139,7 +118,7 @@ def valid_assign(fields_dict, ModelSerializer, courier, available_orders, Assign
 
             for order in available_orders:
                 if order.region in courier.regions:
-                    if is_right_time(order.delivery_hours, courier.working_hours):
+                    if is_available_order_time(order.delivery_hours, courier.working_hours):
                         max_weight = int(courier.get_courier_type_display())
 
                         if order.weight + courier.used_weight <= max_weight:
