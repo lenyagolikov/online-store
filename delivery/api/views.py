@@ -55,4 +55,4 @@ def orders_assign(request):
     courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
     available_orders = Order.objects.filter(is_available=True).order_by("weight")
 
-    return valid_assign(fields_dict, OrderAssignSerializer, courier, available_orders, Assign)
+    return valid_assign(fields_dict, OrdersAssignSerializer, courier, available_orders, Assign)

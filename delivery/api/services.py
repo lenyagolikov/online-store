@@ -1,7 +1,7 @@
+from datetime import datetime, time
+
 from rest_framework.response import Response
 from rest_framework import status
-
-from datetime import datetime, time
 
 
 def valid_create(data_list, ModelSerializer, model):
@@ -100,7 +100,7 @@ def is_right_time(delivery_hours, working_hours):
 
             if begin_time <= check_time <= end_time:
                 return True
-            
+
             check_time = time(int(working_time[:2]), int(working_time[3:5]))
             begin_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
             end_time = time(int(delivery_time[6:8]), int(delivery_time[9:]))
