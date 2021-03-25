@@ -51,7 +51,7 @@ def valid_create(ModelSerializer, data_list, model):
     return Response({"validation_error": {model: invalid_ids_dict}}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_update(ModelSerializer, courier, fields_dict, Assign):
+def valid_update(ModelSerializer, Assign, courier, fields_dict):
     """Возвращает статус валидности запроса на обновление (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
@@ -83,13 +83,16 @@ def valid_update(ModelSerializer, courier, fields_dict, Assign):
             if serializer.is_valid():
                 serializer.save()
 
-                outstanding_orders = Assign.objects.filter(
+                assigns = Assign.objects.filter(
                     courier_id=courier.first().courier_id, complete_time=None).order_by('order_id__weight')
+
+                outstanding_orders = [assign.order_id for assign in assigns]
                 issues_orders = []
 
                 for order in outstanding_orders:
                     if order.region in courier.first().regions and is_available_order_time(order.delivery_hours, courier.first().working_hours):
-                        max_weight = int(courier.first().get_courier_type_display())
+                        max_weight = int(
+                            courier.first().get_courier_type_display())
                         current_weight = 0
 
                         if order.weight + current_weight <= max_weight:

@@ -26,7 +26,7 @@ def courier_update(request, id):
     courier = Courier.objects.filter(courier_id=id)
     fields_dict = request.data
 
-    return valid_update(CourierUpdateSerializer, courier, fields_dict)
+    return valid_update(CourierUpdateSerializer, Assign, courier, fields_dict)
 
 
 @api_view(['POST'])
