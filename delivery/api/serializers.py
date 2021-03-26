@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from datetime import time
+from datetime import datetime, time
 
 from ..models import *
 
@@ -76,3 +76,10 @@ class OrdersCompleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assign
         fields = ['courier_id', 'order_id', 'complete_time']
+
+    def validate_complete_time(self, data):
+        try:
+            datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%fZ')
+            return data
+        except ValueError:
+            raise serializers.ValidationError()

@@ -1,7 +1,11 @@
 from datetime import datetime
+from typing import Any
+
+from django.db.models import Q
 
 from rest_framework.response import Response
 from rest_framework import status
+
 
 from .utils import *
 
@@ -195,7 +199,9 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
 
-    valid_order_and_courier - невыполненный заказ, соответствующий нужному курьеру
+    order - невыполненный заказ, который нужно изменить на выполненый
+    previous_order - предыдущий заказ
+    time_previous_order - время предыдущего заказа
     """
 
     serializer = ModelSerializer(data=fields_dict)
@@ -208,12 +214,20 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
         order_id = serializer.data['order_id']
         complete_time = serializer.data['complete_time']
 
-        valid_order_and_courier = Assign.objects.filter(
+        order = Assign.objects.filter(
             courier_id=courier_id, order_id=order_id, complete_time=None).first()
 
-        if valid_order_and_courier:
-            valid_order_and_courier.complete_time = complete_time
-            valid_order_and_courier.save()
+        previous_order = Assign.objects.filter(
+            ~Q(complete_time=None), courier_id=1).order_by('-complete_time').first()
+
+        if previous_order:
+            time_previous_order = previous_order.complete_time
+        else:
+            time_previous_order = order.assign_time
+
+        if order and complete_time > time_previous_order:
+            order.complete_time = complete_time
+            order.save()
 
             return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)
 
