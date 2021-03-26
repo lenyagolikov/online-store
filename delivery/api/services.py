@@ -218,7 +218,7 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
             courier_id=courier_id, order_id=order_id, complete_time=None).first()
 
         previous_order = Assign.objects.filter(
-            ~Q(complete_time=None), courier_id=1).order_by('-complete_time').first()
+            ~Q(complete_time=None), courier_id=courier_id).order_by('-complete_time').first()
 
         if previous_order:
             time_previous_order = previous_order.complete_time
