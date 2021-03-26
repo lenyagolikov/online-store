@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 
 from django.db.models import Q
 
@@ -230,5 +229,26 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
             order.save()
 
             return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)
+
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+def courier_info(courier):
+    """Возвращает статус валидности запроса на отображение информации о курьере (200 или 400)
+
+    courier - объект курьера
+
+    fields - поля курьера в модели
+    values - значения курьера в модели
+    courier_info - отображение информации в словаре
+    """
+
+    if courier:
+        fields = list(courier.__dict__.keys())[1:]
+        values = list(courier.__dict__.values())[1:]
+
+        courier_info = dict(zip(fields, values))
+
+        return Response(courier_info, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)

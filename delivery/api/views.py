@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 
 from ..models import *
 
-from .services import valid_complete, valid_create, valid_update, valid_assign
+from .services import courier_info, valid_complete, valid_create, valid_update, valid_assign
 from .serializers import *
 
 
@@ -17,16 +17,24 @@ def couriers_create(request):
     return valid_create(CouriersCreateSerializer, data_list, "couriers")
 
 
-@api_view(['PATCH'])
-def courier_update(request, id):
+@api_view(['GET', 'PATCH'])
+def courier_detail(request, id):
     """
+    GET:
+    Возвращает информацию о курьере
+
+    PATCH:
     Принимает список с данными для изменения информации о курьере
     """
 
-    courier = Courier.objects.filter(courier_id=id)
-    fields_dict = request.data
+    if request.method == 'GET':
+        courier = Courier.objects.filter(courier_id=id).first()
+        return courier_info(courier)
 
-    return valid_update(CourierUpdateSerializer, Assign, courier, fields_dict)
+    if request.method == 'PATCH':
+        courier = Courier.objects.filter(courier_id=id)
+        fields_dict = request.data
+        return valid_update(CourierUpdateSerializer, Assign, courier, fields_dict)
 
 
 @api_view(['POST'])
@@ -52,8 +60,10 @@ def orders_assign(request):
 
     fields_dict = request.data
 
-    courier = Courier.objects.filter(courier_id=fields_dict.get('courier_id')).first()
-    available_orders = Order.objects.filter(is_available=True).order_by("weight")
+    courier = Courier.objects.filter(
+        courier_id=fields_dict.get('courier_id')).first()
+    available_orders = Order.objects.filter(
+        is_available=True).order_by("weight")
 
     return valid_assign(OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
 
