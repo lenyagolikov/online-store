@@ -121,11 +121,12 @@ def valid_update(ModelSerializer, Assign, courier, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict):
+def valid_assign(ModelSerializer, Assign, Earnings, courier, available_orders, fields_dict):
     """Возвращает статус валидности запроса на связывание заказа с курьером (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
+    Earnings - модель, в которой хранятся развозы для подсчета 
 
     courier - объект курьера, если id имеется в базе, иначе пустой
     available_orders - заказы, доступные к выдаче
@@ -180,6 +181,9 @@ def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict
                 Assign.objects.create(courier_id=courier,
                                       order_id=order, assign_time=assign_time)
 
+            Earnings.objects.create(
+                courier_id=courier.courier_id, courier_type=courier.courier_type)
+
             orders_ids = [{"id": order.order_id}
                           for order in issues_orders]
 
@@ -188,19 +192,23 @@ def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_complete(ModelSerializer, Assign, fields_dict):
+def valid_complete(ModelSerializer, Assign, Earnings, Courier, fields_dict):
     """Возвращает статус валидности запроса на отметку заказа выполненым (201 или 400)
 
     ModelSerializer - сериализатор модели для валидации входных данных
     Assign - модель, в которой хранятся заказы, выданные курьерам
-    fields_dict - список полей, переданных в запросе
+    Earnings - модель, в которой хранятся развозы для подсчета 
+    Courier - модель для нахождения курьера
 
+    fields_dict - список полей, переданных в запросе
     valid_fields - требуемые поля для заполнения
     taken_fields - поля, переданные в запросе
 
     order - невыполненный заказ, который нужно изменить на выполненый
     previous_order - предыдущий заказ
     time_previous_order - время предыдущего заказа
+
+    remaining_orders - оставшиеся заказы в развозе
     """
 
     serializer = ModelSerializer(data=fields_dict)
@@ -227,6 +235,19 @@ def valid_complete(ModelSerializer, Assign, fields_dict):
         if order and complete_time > time_previous_order:
             order.complete_time = complete_time
             order.save()
+
+            remaining_orders = Assign.objects.filter(
+                courier_id=courier_id, complete_time=None)
+
+            if not remaining_orders:
+                delivery = Earnings.objects.get(
+                    courier_id=courier_id, completed=False)
+                delivery.completed = True
+                delivery.save()
+
+                courier = Courier.objects.get(courier_id=courier_id)
+                courier.earnings += calculation_of_earnings(courier, Earnings)
+                courier.save()
 
             return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)
 

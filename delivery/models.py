@@ -22,7 +22,7 @@ class Courier(models.Model):
         regex=r"^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]"
     )]))
     rating = models.FloatField(null=True)
-    earnings = models.IntegerField(null=True)
+    earnings = models.IntegerField(null=True, default=0)
 
 
 class Order(models.Model):
@@ -42,3 +42,16 @@ class Assign(models.Model):
     order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
     assign_time = models.CharField(max_length=24, null=True, default=None)
     complete_time = models.CharField(max_length=24, null=True, default=None)
+
+
+class Earnings(models.Model):
+
+    COURIER_TYPES = [
+        ('foot', '2'),
+        ('bike', '5'),
+        ('car', '9'),
+    ]
+
+    courier_id = models.IntegerField()
+    courier_type = models.CharField(max_length=4, choices=COURIER_TYPES)
+    completed = models.BooleanField(default=False)

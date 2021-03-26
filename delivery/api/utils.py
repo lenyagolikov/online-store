@@ -29,3 +29,24 @@ def is_available_order_time(delivery_hours, working_hours):
                 return True
 
     return False
+
+
+def calculation_of_rating():
+    pass
+
+
+def calculation_of_earnings(courier, Earnings):
+    """Вычисляет заработок одного развоза
+
+    completed_delivery - выполненный развоз
+    c - коэффициент на момент формирования запроса
+    """
+
+    completed_delivery = Earnings.objects.filter(
+        courier_id=courier.courier_id, courier_type=courier.courier_type, completed=True).order_by('-id').first()
+
+    c = int(courier.get_courier_type_display())
+
+    earnings = 500 * c
+
+    return earnings
