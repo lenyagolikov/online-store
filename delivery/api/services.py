@@ -246,7 +246,8 @@ def valid_complete(ModelSerializer, Assign, Earnings, Courier, fields_dict):
                 delivery.save()
 
                 courier = Courier.objects.get(courier_id=courier_id)
-                courier.earnings += calculation_of_earnings(courier, Earnings)
+                courier.earnings += calculation_of_earnings(
+                    courier_id, Earnings)
                 courier.save()
 
             return Response({"order_id": order_id}, status=status.HTTP_201_CREATED)

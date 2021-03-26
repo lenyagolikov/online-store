@@ -35,7 +35,7 @@ def calculation_of_rating():
     pass
 
 
-def calculation_of_earnings(courier, Earnings):
+def calculation_of_earnings(courier_id, Earnings):
     """Вычисляет заработок одного развоза
 
     completed_delivery - выполненный развоз
@@ -43,9 +43,9 @@ def calculation_of_earnings(courier, Earnings):
     """
 
     completed_delivery = Earnings.objects.filter(
-        courier_id=courier.courier_id, courier_type=courier.courier_type, completed=True).order_by('-id').first()
+        courier_id=courier_id, completed=True).order_by('-id').first()
 
-    c = int(courier.get_courier_type_display())
+    c = int(completed_delivery.get_courier_type_display())
 
     earnings = 500 * c
 
