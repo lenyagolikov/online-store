@@ -72,9 +72,12 @@ class OrdersAssignSerializer(serializers.ModelSerializer):
 
 
 class OrdersCompleteSerializer(serializers.ModelSerializer):
+    
+    courier_id = serializers.IntegerField()
+    order_id = serializers.IntegerField()
 
     class Meta:
-        model = Assign
+        model = Order
         fields = ['courier_id', 'order_id', 'complete_time']
 
     def validate_complete_time(self, data):

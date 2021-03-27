@@ -23,6 +23,7 @@ class Courier(models.Model):
     )]))
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True, default=0)
+    is_available = models.BooleanField(default=True)
 
 
 class Order(models.Model):
@@ -35,16 +36,10 @@ class Order(models.Model):
         regex=r'^(([0,1][0-9])|(2[0-3])):[0-5][0-9][-](([0,1][0-9])|(2[0-3])):[0-5][0-9]'
     )]))
     is_available = models.BooleanField(default=True)
-
-
-class Assign(models.Model):
-    courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
-    order_id = models.ForeignKey("Order", on_delete=models.CASCADE)
-    assign_time = models.CharField(max_length=24, null=True, default=None)
     complete_time = models.CharField(max_length=24, null=True, default=None)
 
 
-class Earnings(models.Model):
+class Assign(models.Model):
 
     COURIER_TYPES = [
         ('foot', '2'),
@@ -52,6 +47,9 @@ class Earnings(models.Model):
         ('car', '9'),
     ]
 
-    courier_id = models.IntegerField()
+    courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
     courier_type = models.CharField(max_length=4, choices=COURIER_TYPES)
+    orders_ids = ArrayField(models.IntegerField())
+    completed_orders_ids = ArrayField(models.IntegerField(null=True), null=True, default=list)
+    assign_time = models.CharField(max_length=24, null=True, default=None)
     completed = models.BooleanField(default=False)

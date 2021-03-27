@@ -65,7 +65,7 @@ def orders_assign(request):
     available_orders = Order.objects.filter(
         is_available=True).order_by("weight")
 
-    return valid_assign(OrdersAssignSerializer, Assign, Earnings, courier, available_orders, fields_dict)
+    return valid_assign(OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
 
 
 @api_view(['POST'])
@@ -77,4 +77,4 @@ def orders_complete(request):
 
     fields_dict = request.data
 
-    return valid_complete(OrdersCompleteSerializer, Assign, Earnings, Courier, fields_dict)
+    return valid_complete(OrdersCompleteSerializer, Assign, Order, Courier, fields_dict)

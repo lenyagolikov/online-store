@@ -35,18 +35,5 @@ def calculation_of_rating():
     pass
 
 
-def calculation_of_earnings(courier_id, Earnings):
-    """Вычисляет заработок одного развоза
-
-    completed_delivery - выполненный развоз
-    c - коэффициент на момент формирования запроса
-    """
-
-    completed_delivery = Earnings.objects.filter(
-        courier_id=courier_id, completed=True).order_by('-id').first()
-
-    c = int(completed_delivery.get_courier_type_display())
-
-    earnings = 500 * c
-
-    return earnings
+def calculation_of_earnings():
+    pass
