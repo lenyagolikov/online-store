@@ -47,49 +47,51 @@ def valid_update(ModelSerializer, Assign, Order, courier, fields_dict):
     то такие заказы снимаются и становятся доступными для других курьеров
     """
 
-    if courier and fields_dict:
-        serializer = ModelSerializer(courier, data=fields_dict, partial=True)
+    if courier:
+        if fields_dict:
+            serializer = ModelSerializer(
+                courier, data=fields_dict, partial=True)
 
-        valid_fields = sorted(serializer.Meta.fields[1:])
-        taken_fields = sorted(list(serializer.initial_data.keys()))
+            valid_fields = sorted(serializer.Meta.fields[1:])
+            taken_fields = sorted(list(serializer.initial_data.keys()))
 
-        if all(field in valid_fields for field in taken_fields):
+            if all(field in valid_fields for field in taken_fields):
 
-            if serializer.is_valid():
-                serializer.save()
+                if serializer.is_valid():
+                    serializer.save()
 
-                delivery = Assign.objects.filter(
-                    courier_id=courier.courier_id, completed=False).first()
+                    delivery = Assign.objects.filter(
+                        courier_id=courier.courier_id, completed=False).first()
 
-                if delivery:
-                    available_orders = Order.objects.filter(
-                        pk__in=delivery.active_orders).order_by('weight')
-                    assigned_orders = search_suitable_orders(
-                        available_orders, courier)
+                    if delivery:
+                        available_orders = Order.objects.filter(
+                            pk__in=delivery.active_orders).order_by('weight')
+                        assigned_orders = search_suitable_orders(
+                            available_orders, courier)
 
-                    unsuitable_orders = list(
-                        set(delivery.active_orders) - set(assigned_orders))
+                        unsuitable_orders = list(
+                            set(delivery.active_orders) - set(assigned_orders))
 
-                    for order_id in unsuitable_orders:
-                        order = Order.objects.get(order_id=order_id)
-                        order.is_available = True
-                        order.save()
+                        for order_id in unsuitable_orders:
+                            order = Order.objects.get(order_id=order_id)
+                            order.is_available = True
+                            order.save()
 
-                        delivery.active_orders.remove(order_id)
+                            delivery.active_orders.remove(order_id)
 
-                        if not delivery.active_orders:
-                            delivery.completed = True
+                            if not delivery.active_orders:
+                                delivery.completed = True
 
-                        delivery.save()
+                            delivery.save()
 
-                model_fields = list(courier.__dict__.keys())[1:5]
-                values_fields = list(courier.__dict__.values())[1:5]
+                    model_fields = list(courier.__dict__.keys())[1:5]
+                    values_fields = list(courier.__dict__.values())[1:5]
 
-                courier_info = dict(zip(model_fields, values_fields))
+                    courier_info = dict(zip(model_fields, values_fields))
 
-                return Response(courier_info, status=status.HTTP_200_OK)
-
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+                    return Response(courier_info, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict):
