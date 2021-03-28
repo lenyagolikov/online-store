@@ -16,9 +16,13 @@ def validate_region(region):
 
 
 def validate_regions(regions):
-    """Проверяет, чтобы регионы были положительными"""
+    """Проверяет, чтобы регионы были положительными и уникальными"""
 
-    return all([region > 0 for region in regions])
+    if all([region > 0 for region in regions]):
+        unique_regions = set(regions)
+        if len(unique_regions) == len(regions):
+            return True
+    return False
 
 
 def validate_weight(weight):
