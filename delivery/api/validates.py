@@ -22,6 +22,7 @@ def validate_regions(regions):
         unique_regions = set(regions)
         if len(unique_regions) == len(regions):
             return True
+
     return False
 
 

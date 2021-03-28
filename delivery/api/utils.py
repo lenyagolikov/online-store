@@ -1,6 +1,15 @@
 from datetime import datetime, time
 
 
+def additional_properties(serializer):
+    """Отображает поля, не прошедшие валидацию"""
+    
+    errors = serializer.errors.keys()
+    values = [str(serializer.errors[error][0]) for error in errors]
+        
+    return dict(zip(errors, values))
+
+
 def is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
     """Поиск заказа, который нужно отметить выполненным"""
 

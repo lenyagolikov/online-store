@@ -14,6 +14,7 @@ def valid_create(ModelSerializer, data_list, model):
 
     valid_objects = []
     invalid_ids = []
+    additinal_properties = []
 
     for data in data_list:
         serializer = ModelSerializer(data=data)
@@ -24,6 +25,7 @@ def valid_create(ModelSerializer, data_list, model):
         if serializer.is_valid() and valid_fields == taken_fields:
             valid_objects.append(serializer)
         else:
+            additinal_properties.append(additional_properties(serializer))
             invalid_ids.append(data[serializer.Meta.fields[0]])
 
     if invalid_ids == []:
@@ -36,8 +38,9 @@ def valid_create(ModelSerializer, data_list, model):
 
         return Response({model: valid_ids_dict}, status=status.HTTP_201_CREATED)
 
-    invalid_ids_dict = [{"id": id} for id in invalid_ids]
-    return Response({"validation_error": {model: invalid_ids_dict}}, status=status.HTTP_400_BAD_REQUEST)
+    errors = [{"id": invalid_ids[i], "additionalProp1": additinal_properties[i]}
+              for i in range(len(invalid_ids))]
+    return Response({"validation_error": {model: errors}}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def valid_update(ModelSerializer, Assign, Order, courier, fields_dict):
