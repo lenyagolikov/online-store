@@ -88,8 +88,19 @@ def is_available_order_time(delivery_hours, working_hours):
 
 
 def calculation_of_rating():
+    """Рассчитывает рейтинг курьера"""
     pass
 
 
-def calculation_of_earnings():
-    pass
+def calculation_of_earnings(Assign, courier):
+    """Рассчитывает заработок курьера"""
+
+    earnings = 0
+    completed_deliveries = Assign.objects.filter(
+        courier_id=courier.courier_id, completed=True).exclude(finished_orders=[])
+
+    for delivery in completed_deliveries:
+        earnings += int(delivery.get_courier_type_display()) * 500
+
+    courier.earnings = earnings
+    courier.save()

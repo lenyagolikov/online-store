@@ -109,6 +109,10 @@ class OrdersCompleteSerializer(serializers.ModelSerializer):
     def validate_complete_time(self, data):
         try:
             datetime.strptime(data, '%Y-%m-%dT%H:%M:%S.%fZ')
-            return data
+
+            if len(data) == 23:
+                return data
+
+            raise serializers.ValidationError()
         except ValueError:
             raise serializers.ValidationError()

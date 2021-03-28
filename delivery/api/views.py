@@ -28,7 +28,7 @@ def courier_detail(request, id):
     courier = Courier.objects.filter(courier_id=id).first()
 
     if request.method == 'GET':
-        return courier_info(courier)
+        return courier_info(Assign, courier)
 
     if request.method == 'PATCH':
         fields_dict = request.data

@@ -151,15 +151,20 @@ def valid_complete(ModelSerializer, Assign, Order, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def courier_info(courier):
-    """Отображает информацию о курьере и дополнительную статистику: рейтинг и заработок."""
+def courier_info(Assign, courier):
+    """Отображает информацию о курьере и дополнительную статистику: рейтинг и заработок"""
 
     if courier:
+        calculation_of_earnings(Assign, courier)
+
         fields = list(courier.__dict__.keys())[1:]
         values = list(courier.__dict__.values())[1:]
 
         courier_info = dict(zip(fields, values))
 
+        if not courier_info['rating']:
+            del courier_info['rating']
+
         return Response(courier_info, status=status.HTTP_200_OK)
 
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+    return Response(status=status.HTTP_404_NOT_FOUND)
