@@ -14,7 +14,7 @@ class Courier(models.Model):
     courier_type = models.CharField(max_length=4, choices=COURIER_TYPES)
     regions = ArrayField(models.IntegerField())
     working_hours = ArrayField(models.CharField(max_length=12))
-    rating = models.FloatField(null=True)
+    rating = models.FloatField(null=True, default=0)
     earnings = models.IntegerField(null=True, default=0)
 
 

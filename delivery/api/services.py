@@ -151,11 +151,12 @@ def valid_complete(ModelSerializer, Assign, Order, fields_dict):
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-def courier_info(Assign, courier):
+def courier_info(Assign, Order, courier):
     """Отображает информацию о курьере и дополнительную статистику: рейтинг и заработок"""
 
     if courier:
         calculation_of_earnings(Assign, courier)
+        calculation_of_rating(Assign, Order, courier)
 
         fields = list(courier.__dict__.keys())[1:]
         values = list(courier.__dict__.values())[1:]

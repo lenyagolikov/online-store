@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time
 
 
 def is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
@@ -87,9 +87,53 @@ def is_available_order_time(delivery_hours, working_hours):
     return False
 
 
-def calculation_of_rating():
+def calculate_delivery_time(first_time, second_time):
+    """Вычисляет время доставки в секундах"""
+    
+    first_time = datetime.strptime(first_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    second_time = datetime.strptime(second_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+    delivery_time = first_time - second_time
+
+    return delivery_time.seconds
+
+
+def calculation_of_rating(Assign, Order, courier):
     """Рассчитывает рейтинг курьера"""
-    pass
+
+    completed_deliveries = Assign.objects.filter(
+        courier_id=courier.courier_id, completed=True).exclude(finished_orders=[])
+    avg_delivery_times_by_region = {}
+
+    for delivery in completed_deliveries:
+        completed_orders = Order.objects.filter(pk__in=delivery.finished_orders)
+        regions = set(order.region for order in completed_orders)
+
+        for region in regions:
+            orders = completed_orders.filter(region=region).order_by('-complete_time')
+            delivery_times_list = []
+
+            for i in range(len(orders)):
+                if i == len(orders) - 1:
+                    delivery_time = calculate_delivery_time(orders[i].complete_time, delivery.assign_time)
+                    delivery_times_list.append(delivery_time)
+                else:
+                    delivery_time = calculate_delivery_time(orders[i].complete_time, orders[i+1].complete_time)
+                    delivery_times_list.append(delivery_time)
+
+            avg_time_for_one_region = sum(delivery_times_list) // len(delivery_times_list)
+
+            if avg_delivery_times_by_region.get(region):
+                avg_delivery_times_by_region[region] += avg_time_for_one_region
+                avg_delivery_times_by_region[region] //= 2
+            else:
+                avg_delivery_times_by_region[region] = avg_time_for_one_region
+
+    if completed_deliveries:
+        t = min(list(avg_delivery_times_by_region.values()))
+        rating = round((60*60 - min(t, 60*60)) / (60*60) * 5, 2)
+
+        courier.rating = rating
+        courier.save()
 
 
 def calculation_of_earnings(Assign, courier):
