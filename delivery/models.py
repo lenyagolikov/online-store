@@ -16,7 +16,6 @@ class Courier(models.Model):
     working_hours = ArrayField(models.CharField(max_length=12))
     rating = models.FloatField(null=True)
     earnings = models.IntegerField(null=True, default=0)
-    is_available = models.BooleanField(default=True)
 
 
 class Order(models.Model):
@@ -39,7 +38,7 @@ class Assign(models.Model):
 
     courier_id = models.ForeignKey("Courier", on_delete=models.CASCADE)
     courier_type = models.CharField(max_length=4, choices=COURIER_TYPES)
-    orders = ArrayField(models.IntegerField())
+    active_orders = ArrayField(models.IntegerField())
     finished_orders = ArrayField(
         models.IntegerField(), null=True, default=list)
     assign_time = models.CharField(max_length=24, null=True, default=None)

@@ -46,8 +46,8 @@ class CourierUpdateSerializer(serializers.ModelSerializer):
 
         raise serializers.ValidationError()
 
-    def validate_region(self, data):
-        if validate_region(data):
+    def validate_regions(self, data):
+        if validate_regions(data):
             return data
 
         raise serializers.ValidationError()

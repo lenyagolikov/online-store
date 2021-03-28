@@ -25,14 +25,14 @@ def courier_detail(request, id):
     Принимает список с данными для изменения информации о курьере
     """
 
+    courier = Courier.objects.filter(courier_id=id).first()
+
     if request.method == 'GET':
-        courier = Courier.objects.filter(courier_id=id).first()
         return courier_info(courier)
 
     if request.method == 'PATCH':
-        courier = Courier.objects.filter(courier_id=id)
         fields_dict = request.data
-        return valid_update(CourierUpdateSerializer, Assign, courier, fields_dict)
+        return valid_update(CourierUpdateSerializer, Assign, Order, courier, fields_dict)
 
 
 @api_view(['POST'])
@@ -53,8 +53,10 @@ def orders_assign(request):
 
     fields_dict = request.data
 
-    courier = Courier.objects.filter(courier_id=fields_dict['courier_id']).first()
-    available_orders = Order.objects.filter(is_available=True).order_by("weight")
+    courier = Courier.objects.filter(
+        courier_id=fields_dict['courier_id']).first()
+    available_orders = Order.objects.filter(
+        is_available=True).order_by("weight")
 
     return valid_assign(OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
 

@@ -1,6 +1,47 @@
 from datetime import time
 
 
+def is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
+    """Поиск заказа, который нужно отметить выполненным"""
+
+    if delivery and order_id in delivery.active_orders:
+        if complete_time > previous_order_time(Assign, Order, courier_id):
+            order = Order.objects.get(order_id=order_id)
+            order.complete_time = complete_time
+            order.save()
+
+            delivery.active_orders.remove(order_id)
+            delivery.finished_orders.append(order_id)
+
+            if not delivery.active_orders:
+                delivery.completed = True
+
+            delivery.save()
+            return True
+
+    return False
+
+
+def search_suitable_orders(available_orders, courier):
+    """Поиск подходящих заказов для выдачи курьеру"""
+
+    assigned_orders = []
+
+    for order in available_orders:
+        if order.region in courier.regions:
+            if is_available_order_time(order.delivery_hours, courier.working_hours):
+                max_weight = int(courier.get_courier_type_display())
+                current_weight = 0
+
+                if order.weight + current_weight <= max_weight:
+                    assigned_orders.append(order.order_id)
+                    order.is_available = False
+                    current_weight += order.weight
+                    order.save()
+
+    return assigned_orders
+
+
 def previous_order_time(Assign, Order, courier_id):
     """
     Находит время окончания предыдущего заказа

@@ -40,12 +40,15 @@ def valid_create(ModelSerializer, data_list, model):
     return Response({"validation_error": {model: invalid_ids_dict}}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def valid_update(ModelSerializer, Assign, courier, fields_dict):
-    """Возвращает статус валидности запроса на обновление (201 или 400)"""
+def valid_update(ModelSerializer, Assign, Order, courier, fields_dict):
+    """
+    Отображает карточку курьера с изменениями
+    Если появляются заказы, которые курьер не может развести,
+    то такие заказы снимаются и становятся доступными для других курьеров
+    """
 
     if courier and fields_dict:
-        serializer = ModelSerializer(
-            courier.first(), data=fields_dict, partial=True)
+        serializer = ModelSerializer(courier, data=fields_dict, partial=True)
 
         valid_fields = sorted(serializer.Meta.fields[1:])
         taken_fields = sorted(list(serializer.initial_data.keys()))
@@ -55,38 +58,36 @@ def valid_update(ModelSerializer, Assign, courier, fields_dict):
             if serializer.is_valid():
                 serializer.save()
 
-                assigns = Assign.objects.filter(
-                    courier_id=courier.first().courier_id, complete_time=None).order_by('order_id__weight')
+                delivery = Assign.objects.filter(
+                    courier_id=courier.courier_id, completed=False).first()
 
-                outstanding_orders = [assign.order_id for assign in assigns]
-                issues_orders = []
+                if delivery:
+                    available_orders = Order.objects.filter(
+                        pk__in=delivery.active_orders).order_by('weight')
+                    assigned_orders = search_suitable_orders(
+                        available_orders, courier)
 
-                for order in outstanding_orders:
-                    if order.region in courier.first().regions:
-                        if is_available_order_time(order.delivery_hours, courier.first().working_hours):
-                            max_weight = int(
-                                courier.first().get_courier_type_display())
-                            current_weight = 0
+                    unsuitable_orders = list(
+                        set(delivery.active_orders) - set(assigned_orders))
 
-                            if order.weight + current_weight <= max_weight:
-                                issues_orders.append(order)
-                                current_weight += order.weight
+                    for order_id in unsuitable_orders:
+                        order = Order.objects.get(order_id=order_id)
+                        order.is_available = True
+                        order.save()
 
-                unsuitable_orders = list(
-                    set(outstanding_orders) - set(issues_orders))
+                        delivery.active_orders.remove(order_id)
 
-                for order in unsuitable_orders:
-                    Assign.objects.filter(
-                        courier_id=courier.first().courier_id, order_id=order.order_id).delete()
-                    order.is_available = True
-                    order.save()
+                        if not delivery.active_orders:
+                            delivery.completed = True
 
-                model_fields = serializer.Meta.fields
-                values_fields = list(courier.values().first().values())
+                        delivery.save()
+
+                model_fields = list(courier.__dict__.keys())[1:5]
+                values_fields = list(courier.__dict__.values())[1:5]
 
                 courier_info = dict(zip(model_fields, values_fields))
 
-                return Response(courier_info, status=status.HTTP_201_CREATED)
+                return Response(courier_info, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -107,29 +108,17 @@ def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict
             courier_id=courier.courier_id, completed=False).first()
 
         if delivery:
-            assigned_orders = delivery.orders
+            assigned_orders = delivery.active_orders
             assign_time = delivery.assign_time
         else:
-            assigned_orders = []
-
-            for order in available_orders:
-                if order.region in courier.regions:
-                    if is_available_order_time(order.delivery_hours, courier.working_hours):
-                        max_weight = int(courier.get_courier_type_display())
-                        current_weight = 0
-
-                        if order.weight + current_weight <= max_weight:
-                            assigned_orders.append(order.order_id)
-                            order.is_available = False
-                            current_weight += order.weight
-                            order.save()
+            assigned_orders = search_suitable_orders(available_orders, courier)
 
             if assigned_orders == []:
                 return Response({"orders": assigned_orders}, status=status.HTTP_200_OK)
 
             assign_time = datetime.utcnow().isoformat()[:-4] + "Z"
             Assign.objects.create(courier_id=courier, courier_type=courier.courier_type,
-                                  orders=assigned_orders, assign_time=assign_time)
+                                  active_orders=assigned_orders, assign_time=assign_time)
 
         orders = [{"id": order_id} for order_id in assigned_orders]
 
@@ -154,27 +143,14 @@ def valid_complete(ModelSerializer, Assign, Order, fields_dict):
         delivery = Assign.objects.filter(
             courier_id=courier_id, completed=False).first()
 
-        if delivery and order_id in delivery.orders:
-            if complete_time > previous_order_time(Assign, Order, courier_id):
-                order = Order.objects.get(order_id=order_id)
-                order.complete_time = complete_time
-                order.save()
-
-                delivery.orders.remove(order_id)
-                delivery.finished_orders.append(order_id)
-
-                if not delivery.orders:
-                    delivery.completed = True
-
-                delivery.save()
-
-                return Response({"order_id": order_id}, status=status.HTTP_200_OK)
+        if is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
+            return Response({"order_id": order_id}, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 def courier_info(courier):
-    """Возвращает статус валидности запроса на отображение информации о курьере (200 или 400)"""
+    """Отображает информацию о курьере и дополнительную статистику: рейтинг и заработок."""
 
     if courier:
         fields = list(courier.__dict__.keys())[1:]

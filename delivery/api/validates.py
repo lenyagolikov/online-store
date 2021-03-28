@@ -5,18 +5,25 @@ from re import match
 
 def validate_id(id):
     """Проверяет, чтобы id был положительным"""
+
     return id > 0
 
 
 def validate_region(region):
+    """Проверяет, чтобы регион был положительным"""
+
     return region > 0
 
 
 def validate_regions(regions):
+    """Проверяет, чтобы регионы были положительными"""
+
     return all([region > 0 for region in regions])
 
 
 def validate_weight(weight):
+    """Проверяет, чтобы вес был в указанном промежутке"""
+
     return Decimal("0.01") <= weight <= 50
 
 
