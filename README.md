@@ -1,3 +1,5 @@
+ИНСТРУКЦИЯ ПО УСТАНОВКЕ И ЗАПУСКУ СЕРВИСА (NOT DEPLOY)
+
 Требования:
 1. Python 3
 2. PostgreSQL
@@ -50,7 +52,7 @@
 
 2. Выполните python3 manage.py migrate, находясь в одной директории с manage.py
 
-Запуск сервиса:
+Запуск сервиса(not deploy):
 Находясь в корневом репозитории (где лежит manage.py), выполните:
 
 python3 manage.py runserver 0.0.0.0:8080
