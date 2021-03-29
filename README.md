@@ -30,6 +30,7 @@
 2. Откройте консоль psql и задайте пароль админа в БД
 
     sudo -u postgres psql postgres
+
     \password postgres
 3. Создайте и настройте пользователя (user_name - имя пользователя, password - пароль)
 
