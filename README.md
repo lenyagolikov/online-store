@@ -59,6 +59,6 @@
 
     python3 manage.py runserver (по умолчанию: порт 8000, домен: 127.0.0.1)
     
-    или явно укажите домен и порт: python3 manage.py runserver <domain>:<port>
+    или явно укажите домен и порт: python3 manage.py runserver domain:port
     
 
