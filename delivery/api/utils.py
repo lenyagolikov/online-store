@@ -3,10 +3,10 @@ from datetime import datetime, time
 
 def additional_properties(serializer):
     """Отображает поля, не прошедшие валидацию"""
-    
+
     errors = serializer.errors.keys()
     values = [str(serializer.errors[error][0]) for error in errors]
-        
+
     return dict(zip(errors, values))
 
 
@@ -90,7 +90,7 @@ def is_available_order_time(delivery_hours, working_hours):
             begin_time = time(int(delivery_time[:2]), int(delivery_time[3:5]))
             end_time = time(int(delivery_time[6:8]), int(delivery_time[9:]))
 
-            if begin_time <= check_time <= end_time:
+            if begin_time < check_time < end_time:
                 return True
 
     return False
@@ -98,7 +98,7 @@ def is_available_order_time(delivery_hours, working_hours):
 
 def calculate_delivery_time(first_time, second_time):
     """Вычисляет время доставки в секундах"""
-    
+
     first_time = datetime.strptime(first_time, '%Y-%m-%dT%H:%M:%S.%fZ')
     second_time = datetime.strptime(second_time, '%Y-%m-%dT%H:%M:%S.%fZ')
     delivery_time = first_time - second_time
@@ -114,22 +114,27 @@ def calculation_of_rating(Assign, Order, courier):
     avg_delivery_times_by_region = {}
 
     for delivery in completed_deliveries:
-        completed_orders = Order.objects.filter(pk__in=delivery.finished_orders)
+        completed_orders = Order.objects.filter(
+            pk__in=delivery.finished_orders)
         regions = set(order.region for order in completed_orders)
 
         for region in regions:
-            orders = completed_orders.filter(region=region).order_by('-complete_time')
+            orders = completed_orders.filter(
+                region=region).order_by('-complete_time')
             delivery_times_list = []
 
             for i in range(len(orders)):
                 if i == len(orders) - 1:
-                    delivery_time = calculate_delivery_time(orders[i].complete_time, delivery.assign_time)
+                    delivery_time = calculate_delivery_time(
+                        orders[i].complete_time, delivery.assign_time)
                     delivery_times_list.append(delivery_time)
                 else:
-                    delivery_time = calculate_delivery_time(orders[i].complete_time, orders[i+1].complete_time)
+                    delivery_time = calculate_delivery_time(
+                        orders[i].complete_time, orders[i+1].complete_time)
                     delivery_times_list.append(delivery_time)
 
-            avg_time_for_one_region = sum(delivery_times_list) // len(delivery_times_list)
+            avg_time_for_one_region = sum(
+                delivery_times_list) // len(delivery_times_list)
 
             if avg_delivery_times_by_region.get(region):
                 avg_delivery_times_by_region[region] += avg_time_for_one_region

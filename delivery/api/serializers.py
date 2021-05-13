@@ -1,8 +1,7 @@
 from rest_framework import serializers
 from datetime import datetime
-
-from .validates import *
-from ..models import *
+from delivery.api import validates
+from delivery.models import Courier, Order, Assign
 
 
 class CouriersCreateSerializer(serializers.ModelSerializer):
@@ -12,21 +11,21 @@ class CouriersCreateSerializer(serializers.ModelSerializer):
         fields = ['courier_id', 'courier_type', 'regions', 'working_hours']
 
     def validate_courier_id(self, data):
-        if validate_id(data):
+        if validates.validate_id(data):
             return data
 
         raise serializers.ValidationError(
             "This field must be unique and positive integer number")
 
     def validate_regions(self, data):
-        if validate_regions(data):
+        if validates.validate_regions(data):
             return data
 
         raise serializers.ValidationError(
             "This field must be an array of unique and positive integer numbers")
 
     def validate_working_hours(self, data):
-        if validate_hours(data):
+        if validates.validate_hours(data):
             return data
 
         raise serializers.ValidationError(
@@ -44,19 +43,19 @@ class CourierUpdateSerializer(serializers.ModelSerializer):
                         }
 
     def validate_courier_id(self, data):
-        if validate_id(data):
+        if validates.validate_id(data):
             return data
 
         raise serializers.ValidationError()
 
     def validate_regions(self, data):
-        if validate_regions(data):
+        if validates.validate_regions(data):
             return data
 
         raise serializers.ValidationError()
 
     def validate_working_hours(self, data):
-        if validate_hours(data):
+        if validates.validate_hours(data):
             return data
 
         raise serializers.ValidationError()
@@ -69,28 +68,28 @@ class OrdersCreateSerializer(serializers.ModelSerializer):
         fields = ['order_id', 'weight', 'region', 'delivery_hours']
 
     def validate_order_id(self, data):
-        if validate_id(data):
+        if validates.validate_id(data):
             return data
 
         raise serializers.ValidationError(
             "This field must be unique and positive integer number")
 
     def validate_weight(self, data):
-        if validate_weight(data):
+        if validates.validate_weight(data):
             return data
 
         raise serializers.ValidationError(
             "This field should be between 0.01 and 50")
 
     def validate_region(self, data):
-        if validate_region(data):
+        if validates.validate_region(data):
             return data
 
         raise serializers.ValidationError(
             "This field must be positive integer number")
 
     def validate_delivery_hours(self, data):
-        if validate_hours(data):
+        if validates.validate_hours(data):
             return data
 
         raise serializers.ValidationError(

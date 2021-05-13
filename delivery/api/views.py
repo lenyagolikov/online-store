@@ -1,9 +1,7 @@
 from rest_framework.decorators import api_view
-
-from ..models import *
-
-from .services import *
-from .serializers import *
+from delivery.models import Courier, Order, Assign
+from delivery.api import services
+from delivery.api import serializers
 
 
 @api_view(['POST'])
@@ -12,7 +10,7 @@ def couriers_create(request):
 
     data_list = request.data.get('data')
 
-    return valid_create(CouriersCreateSerializer, data_list, "couriers")
+    return services.valid_create(serializers.CouriersCreateSerializer, data_list, "couriers")
 
 
 @api_view(['GET', 'PATCH'])
@@ -28,11 +26,11 @@ def courier_detail(request, id):
     courier = Courier.objects.filter(courier_id=id).first()
 
     if request.method == 'GET':
-        return courier_info(Assign, Order, courier)
+        return services.courier_info(Assign, Order, courier)
 
     if request.method == 'PATCH':
         fields_dict = request.data
-        return valid_update(CourierUpdateSerializer, Assign, Order, courier, fields_dict)
+        return services.valid_update(serializers.CourierUpdateSerializer, Assign, Order, courier, fields_dict)
 
 
 @api_view(['POST'])
@@ -41,7 +39,7 @@ def orders_create(request):
 
     data_list = request.data.get('data')
 
-    return valid_create(OrdersCreateSerializer, data_list, "orders")
+    return services.valid_create(serializers.OrdersCreateSerializer, data_list, "orders")
 
 
 @api_view(['POST'])
@@ -58,7 +56,7 @@ def orders_assign(request):
     available_orders = Order.objects.filter(
         is_available=True).order_by("weight")
 
-    return valid_assign(OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
+    return services.valid_assign(serializers.OrdersAssignSerializer, Assign, courier, available_orders, fields_dict)
 
 
 @api_view(['POST'])
@@ -70,4 +68,4 @@ def orders_complete(request):
 
     fields_dict = request.data
 
-    return valid_complete(OrdersCompleteSerializer, Assign, Order, fields_dict)
+    return services.valid_complete(serializers.OrdersCompleteSerializer, Assign, Order, fields_dict)

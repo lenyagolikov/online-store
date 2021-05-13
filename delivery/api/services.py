@@ -1,9 +1,7 @@
-from datetime import datetime
-
-from rest_framework.response import Response
 from rest_framework import status
-
-from .utils import *
+from rest_framework.response import Response
+from datetime import datetime
+from delivery.api import utils
 
 
 def valid_create(ModelSerializer, data_list, model):
@@ -25,7 +23,8 @@ def valid_create(ModelSerializer, data_list, model):
         if serializer.is_valid() and valid_fields == taken_fields:
             valid_objects.append(serializer)
         else:
-            additinal_properties.append(additional_properties(serializer))
+            additinal_properties.append(
+                utils.additional_properties(serializer))
             invalid_ids.append(data[serializer.Meta.fields[0]])
 
     if invalid_ids == []:
@@ -69,7 +68,7 @@ def valid_update(ModelSerializer, Assign, Order, courier, fields_dict):
                     if delivery:
                         available_orders = Order.objects.filter(
                             pk__in=delivery.active_orders).order_by('weight')
-                        assigned_orders = search_suitable_orders(
+                        assigned_orders = utils.search_suitable_orders(
                             available_orders, courier)
 
                         unsuitable_orders = list(
@@ -116,7 +115,8 @@ def valid_assign(ModelSerializer, Assign, courier, available_orders, fields_dict
             assigned_orders = delivery.active_orders
             assign_time = delivery.assign_time
         else:
-            assigned_orders = search_suitable_orders(available_orders, courier)
+            assigned_orders = utils.search_suitable_orders(
+                available_orders, courier)
 
             if assigned_orders == []:
                 return Response({"orders": assigned_orders}, status=status.HTTP_200_OK)
@@ -148,7 +148,7 @@ def valid_complete(ModelSerializer, Assign, Order, fields_dict):
         delivery = Assign.objects.filter(
             courier_id=courier_id, completed=False).first()
 
-        if is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
+        if utils.is_completed_order_found(delivery, order_id, courier_id, complete_time, Assign, Order):
             return Response({"order_id": order_id}, status=status.HTTP_200_OK)
 
     return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -158,8 +158,8 @@ def courier_info(Assign, Order, courier):
     """Отображает информацию о курьере и дополнительную статистику: рейтинг и заработок"""
 
     if courier:
-        calculation_of_earnings(Assign, courier)
-        calculation_of_rating(Assign, Order, courier)
+        utils.calculation_of_earnings(Assign, courier)
+        utils.calculation_of_rating(Assign, Order, courier)
 
         fields = list(courier.__dict__.keys())[1:]
         values = list(courier.__dict__.values())[1:]

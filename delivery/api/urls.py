@@ -1,12 +1,11 @@
 from django.urls import path
-
-from .views import *
+from delivery.api import views
 
 
 urlpatterns = [
-    path('couriers', couriers_create),
-    path('couriers/<str:id>', courier_detail),
-    path('orders', orders_create),
-    path('orders/assign', orders_assign),
-    path('orders/complete', orders_complete),
+    path('couriers', views.couriers_create),
+    path('couriers/<str:id>', views.courier_detail),
+    path('orders', views.orders_create),
+    path('orders/assign', views.orders_assign),
+    path('orders/complete', views.orders_complete),
 ]
