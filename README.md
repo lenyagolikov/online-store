@@ -1,3 +1,5 @@
+ИНСТРУКЦИЯ ПО УСТАНОВКЕ И ЗАПУСКУ СЕРВИСА (NOT DEPLOY)
+
 Требования:
 1. Python 3
 2. PostgreSQL
@@ -46,19 +48,13 @@
     create database db_name owner user_name;
 
 Соединение с базой данных:
-1. Откройте файл settings.py в папке onlinestore и настройте конфигурацию (db_name - имя БД, user_name - имя пользователя, password - пароль пользователя):
+1. Откройте файл settings.py в папке onlinestore и настройте конфигурацию (db_name - имя БД, user_name - имя пользователя, password - пароль пользователя)
 
-Запуск сервиса:
-1. Откройте файл settings.py в папке onlinestore и настройте конфигурацию для ALLOWED_HOSTS (domain - домен):
+2. Выполните python3 manage.py migrate, находясь в одной директории с manage.py
 
-    ALLOWED_HOSTS = ['domain']
-3. Находясь в корневом репозитории (где лежит manage.py), выполните:
+Запуск сервиса(not deploy):
+Находясь в корневом репозитории (где лежит manage.py), выполните:
 
-    python3 manage.py migrate
-2. Запустите проект:
-
-    python3 manage.py runserver (по умолчанию: порт 8000, домен: 127.0.0.1)
-    
-    или явно укажите домен и порт: python3 manage.py runserver domain:port
+python3 manage.py runserver 0.0.0.0:8080
     
 
