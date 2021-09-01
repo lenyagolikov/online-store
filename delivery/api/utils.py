@@ -83,7 +83,7 @@ def is_available_order_time(delivery_hours, working_hours):
             begin_time = time(int(working_time[:2]), int(working_time[3:5]))
             end_time = time(int(working_time[6:8]), int(working_time[9:]))
 
-            if begin_time <= check_time <= end_time:
+            if begin_time < check_time < end_time:
                 return True
 
             check_time = time(int(working_time[:2]), int(working_time[3:5]))

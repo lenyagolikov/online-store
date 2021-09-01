@@ -69,8 +69,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'onlinestore',
-        'USER': 'postgres',
-        'PASSWORD': '12345678',
+        'USER': 'lenyagolikov',
+        'PASSWORD': '1234',
         'HOST': '127.0.0.1',
         'PORT': '5432'
     }
